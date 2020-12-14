@@ -1,14 +1,13 @@
 import json
 import random
 import ssl
+import urllib.request
 from urllib.request import urlopen
 from random import shuffle
 from flask import Flask, render_template
 from bs4 import BeautifulSoup
 
 app = Flask(__name__)
-
-print("hello")
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -48,7 +47,6 @@ def api_recommend_article():
 
 @app.route("/api/biz_article")
 def api_tech_article():
-    print("hello biz_article")
     """
         **** ここを実装します（発展課題） ****
         ・自分の好きなサイトをWebスクレイピングして情報をフロントに返却します
@@ -67,7 +65,32 @@ def api_tech_article():
 
     return json.dumps({
         "content": item.find("title").string,
-        # "description": item.find("description").string,
+        "link": item.find("guid").string
+    })
+
+
+@app.route("/api/giga_article")
+def api_giga_article():
+
+    # Gigazine の記事の取得
+    # 403エラーが出ていたので書き方を下記に変更
+    url = "https://gigazine.net/news/rss_2.0/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0"
+    }
+
+    request = urllib.request.Request(url, headers=headers)
+    with urlopen(request) as res:
+        html = res.read().decode("utf-8")
+
+    soup = BeautifulSoup(html, "html.parser")
+    items = soup.select("item")
+    shuffle(items)
+    item = items[0]
+    print(item)
+
+    return json.dumps({
+        "content": item.find("title").string,
         "link": item.find("guid").string
     })
 
